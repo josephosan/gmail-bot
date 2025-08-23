@@ -1,0 +1,17 @@
+version: 3.8
+
+services:
+  bot:
+    build: .
+    container_name: "gmail_telegram_bot"
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - 2020:2020
+    networks:
+      - core-net
+
+networks:
+  core-net:
+    external: true
