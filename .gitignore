@@ -2,3 +2,4 @@ credentials.json
 .env
 dist
 node_modules
+log.txt

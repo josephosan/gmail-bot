@@ -1,8 +1,11 @@
 import { bot } from "./bot";
-import { authorize, listLabels } from "./gmail";
+import { customGmail } from "./gmail";
+import { logger } from "./log";
 
 // * Run gmail stuff
-authorize().then(listLabels).catch(console.error);
+// customGmail.authorize().then(customGmail.listLabels).catch(console.error);
 
 // * Launch bot
-bot.launch()
+bot.launch(() => {
+  logger.log("Bot launched");
+});
