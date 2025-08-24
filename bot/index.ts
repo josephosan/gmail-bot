@@ -5,6 +5,7 @@ import { TELEGRAM_BOT_COMMAND } from "../config/bot";
 import { customGmail } from "../gmail";
 import { logger } from "../log";
 
+logger.log(TELEGRAM_BOT_TOKEN);
 export const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
 bot.start((ctx) => {
