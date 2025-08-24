@@ -30,7 +30,17 @@ class Logger {
    */
   public log(message: string): void {
     const _now = new Date();
-    const finalMSG = `${_now} ${message}`;
+    const finalMSG = `[info]: ${_now} ${message}`;
+    this.writeInto(finalMSG);
+    console.log(finalMSG);
+  }
+
+  /**
+   *
+   */
+  public error(message: string): void {
+    const _now = new Date();
+    const finalMSG = `[error]: ${_now} ${message}`;
     this.writeInto(finalMSG);
     console.log(finalMSG);
   }

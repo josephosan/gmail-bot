@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import path from "path";
+import path, { resolve } from "path";
 import process from "process";
 import { authenticate } from "@google-cloud/local-auth";
 import { google, Auth } from "googleapis";
@@ -13,7 +13,27 @@ const CREDENTIALS_PATH = path.join(process.cwd(), "credentials.json");
 
 export class CustomGmail {
   constructor() {
-    logger.log("Gmail class instantiated.");
+    this.initialize()
+      .then(() => {
+        logger.log("Gmail class instantiated.");
+      })
+      .catch((err) => {
+        logger.error(err);
+      });
+  }
+
+  private initialize(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.authorize()
+        .then((auth: Auth.OAuth2Client) => {
+          this.listLabels(auth);
+          resolve();
+        })
+        .catch((err) => {
+          logger.log(err);
+          reject(err);
+        });
+    });
   }
 
   /**
