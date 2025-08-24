@@ -5,6 +5,8 @@ import { authenticate } from "@google-cloud/local-auth";
 import { google, Auth } from "googleapis";
 import { TelegramActionContext, TelegramHearsContext } from "../interface";
 import { logger } from "../log";
+import { AUTHORIZED_USERNAME } from "../config/env";
+import { error } from "console";
 
 const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
 
@@ -107,27 +109,43 @@ export class CustomGmail {
     });
   }
 
+  /**
+   *
+   */
+  private sanityCheck(ctx: TelegramHearsContext | TelegramActionContext): void {
+    const telegramUser = ctx.from;
+    const userName = telegramUser?.username;
+
+    if (!userName || userName !== AUTHORIZED_USERNAME) {
+      logger.error(`Telegram user requesting: ${userName}, is not allowed`);
+      ctx.reply(`Telegram requesting user: ${userName} is not allowed`);
+      throw new Error("Unauthorized");
+    }
+  }
+
   // ** =========================== Actions =========================== ** //
   /**
    *
    */
   public getActiveGmail(ctx: TelegramHearsContext | TelegramActionContext): void {
-    const telegramUser = ctx.from;
-    logger.log(
-      `Telegram user requesting: ${telegramUser?.username || telegramUser?.id}`,
-    );
-    this.authorize()
-      .then(async (auth) => {
-        const gmail = google.gmail({ version: "v1", auth });
-        const profile = await gmail.users.getProfile({ userId: "me" });
-        const emailAddress = profile.data.emailAddress;
-        logger.log(`Authenticated Gmail user: ${emailAddress}`);
-        ctx.reply(`Authenticated Gmail user: ${emailAddress}`);
-      })
-      .catch((err) => {
-        logger.error(`Failed to fetch Gmail username: ${err}`);
-        ctx.reply("Failed to fetch Gmail username.");
-      });
+    try {
+      this.sanityCheck(ctx);
+
+      logger.log(`Authorized user requesting for gmail.`);
+
+      this.authorize()
+        .then(async (auth) => {
+          const gmail = google.gmail({ version: "v1", auth });
+          const profile = await gmail.users.getProfile({ userId: "me" });
+          const emailAddress = profile.data.emailAddress;
+          logger.log(`Authenticated Gmail user: ${emailAddress}`);
+          ctx.reply(`Authenticated Gmail user: ${emailAddress}`);
+        })
+        .catch((err) => {
+          logger.error(`Failed to fetch Gmail username: ${err}`);
+          ctx.reply("Failed to fetch Gmail username.");
+        });
+    } catch (err) {}
   }
 
   /**
