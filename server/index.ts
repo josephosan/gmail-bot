@@ -11,4 +11,5 @@ app.get("/oauth2", async (req: Request, res: Response) => {
   }
 
   logger.log(`Auth code: ${code}`);
+  res.send(200);
 });
