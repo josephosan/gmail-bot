@@ -5,6 +5,10 @@ services:
     restart: always
     env_file:
       - ./.env
+    environment:
+      - "VIRTUAL_HOST=gmail.bot.josephosanlou.ir,www.gmail.bot.josephosanlou.ir"
+      - "VIRTUAL_PORT=3000"
+      - "LETSENCRYPT_HOST=gmail.bot.josephosanlou.ir,www.gmail.bot.josephosanlou.ir"
     ports:
       - 2020:2020
       - 3001:3001

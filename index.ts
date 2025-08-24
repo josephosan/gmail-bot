@@ -9,6 +9,7 @@ bot
     logger.log("Bot launched");
   })
   .then(() => {
+    // * Start express server
     app.listen(EXPRESS_SERVER_PORT, () =>
       logger.log(`Listening on port: ${EXPRESS_SERVER_PORT}`),
     );

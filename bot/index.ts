@@ -2,10 +2,9 @@ import { Telegraf, Markup } from "telegraf";
 import { message } from "telegraf/filters";
 import { TELEGRAM_BOT_TOKEN } from "../config/env";
 import { TELEGRAM_BOT_COMMAND } from "../config/bot";
-import { customGmail } from "../gmail";
+import { customGmail } from "../mail";
 import { logger } from "../log";
 
-logger.log(TELEGRAM_BOT_TOKEN);
 export const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
 bot.start((ctx) => {

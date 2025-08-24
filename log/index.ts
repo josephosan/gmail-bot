@@ -7,7 +7,7 @@ class Logger {
   constructor() {
     this.appStart = new Date();
 
-    this.log(`Project start`);
+    this.log(`================= Project start =================`);
   }
 
   /**
@@ -30,7 +30,7 @@ class Logger {
    */
   public log(message: string): void {
     const _now = new Date();
-    const finalMSG = `[info]: ${_now} ${message}`;
+    const finalMSG = `[info ${_now}]: ${message}`;
     this.writeInto(finalMSG);
     console.log(finalMSG);
   }
@@ -40,7 +40,7 @@ class Logger {
    */
   public error(message: string): void {
     const _now = new Date();
-    const finalMSG = `[error]: ${_now} ${message}`;
+    const finalMSG = `[error ${_now}]: ${message}`;
     this.writeInto(finalMSG);
     console.log(finalMSG);
   }
