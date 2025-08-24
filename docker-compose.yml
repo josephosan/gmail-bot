@@ -10,7 +10,7 @@ services:
     networks:
       - core-net
     volumes:
-      - ./log.txt:/app/log.txt:ro
+      - ./log.txt:/app/log.txt
 
 networks:
   core-net:
