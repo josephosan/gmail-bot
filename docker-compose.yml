@@ -11,6 +11,7 @@ services:
       - core-net
     volumes:
       - ./log.txt:/app/log.txt
+      - ./token.json:/app/token.json
 
 networks:
   core-net:

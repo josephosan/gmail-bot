@@ -111,7 +111,7 @@ export class CustomGmail {
   /**
    *
    */
-  public getAllGmail(ctx: TelegramHearsContext | TelegramActionContext): void {
+  public getActiveGmail(ctx: TelegramHearsContext | TelegramActionContext): void {
     const telegramUser = ctx.from;
     logger.log(
       `Telegram user requesting: ${telegramUser?.username || telegramUser?.id}`,
@@ -133,14 +133,16 @@ export class CustomGmail {
   /**
    *
    */
-  public getLastGmail(ctx: TelegramHearsContext | TelegramActionContext): void {
-    ctx.reply("Fetching the last Gmail...");
+  public getLastMail(ctx: TelegramHearsContext | TelegramActionContext): void {
+    ctx.reply("Fetching the last mail...");
   }
 
   /**
    *
    */
-  public getSummary(ctx: TelegramHearsContext | TelegramActionContext): void {
+  public getTodaysAllMailSummary(
+    ctx: TelegramHearsContext | TelegramActionContext,
+  ): void {
     ctx.reply("Fetching Gmail summary...");
   }
 }

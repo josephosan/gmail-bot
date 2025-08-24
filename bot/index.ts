@@ -15,20 +15,20 @@ bot.start((ctx) => {
     Markup.keyboard([
       [
         Markup.button.callback(
-          TELEGRAM_BOT_COMMAND.GET_ALL_GMAIL,
-          TELEGRAM_BOT_COMMAND.GET_ALL_GMAIL,
+          TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL,
+          TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL,
         ),
       ],
       [
         Markup.button.callback(
-          TELEGRAM_BOT_COMMAND.GET_LAST_GMAIL,
-          TELEGRAM_BOT_COMMAND.GET_LAST_GMAIL,
+          TELEGRAM_BOT_COMMAND.GET_LAST_MAIL,
+          TELEGRAM_BOT_COMMAND.GET_LAST_MAIL,
         ),
       ],
       [
         Markup.button.callback(
-          TELEGRAM_BOT_COMMAND.GET_SUMMARY_GMAIL,
-          TELEGRAM_BOT_COMMAND.GET_SUMMARY_GMAIL,
+          TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY,
+          TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY,
         ),
       ],
     ])
@@ -43,20 +43,20 @@ bot.help((ctx) => {
     Markup.inlineKeyboard([
       [
         Markup.button.callback(
-          TELEGRAM_BOT_COMMAND.GET_ALL_GMAIL,
-          TELEGRAM_BOT_COMMAND.GET_ALL_GMAIL,
+          TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL,
+          TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL,
         ),
       ],
       [
         Markup.button.callback(
-          TELEGRAM_BOT_COMMAND.GET_LAST_GMAIL,
-          TELEGRAM_BOT_COMMAND.GET_LAST_GMAIL,
+          TELEGRAM_BOT_COMMAND.GET_LAST_MAIL,
+          TELEGRAM_BOT_COMMAND.GET_LAST_MAIL,
         ),
       ],
       [
         Markup.button.callback(
-          TELEGRAM_BOT_COMMAND.GET_SUMMARY_GMAIL,
-          TELEGRAM_BOT_COMMAND.GET_SUMMARY_GMAIL,
+          TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY,
+          TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY,
         ),
       ],
     ]),
@@ -64,27 +64,27 @@ bot.help((ctx) => {
 });
 
 // * Get all
-bot.hears(TELEGRAM_BOT_COMMAND.GET_ALL_GMAIL, (ctx) => {
-  customGmail.getAllGmail(ctx);
+bot.hears(TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL, (ctx) => {
+  customGmail.getActiveGmail(ctx);
 });
-bot.action(TELEGRAM_BOT_COMMAND.GET_ALL_GMAIL, (ctx) => {
-  customGmail.getAllGmail(ctx);
+bot.action(TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL, (ctx) => {
+  customGmail.getActiveGmail(ctx);
 });
 
 // * Get last
-bot.hears(TELEGRAM_BOT_COMMAND.GET_LAST_GMAIL, (ctx) => {
-  customGmail.getLastGmail(ctx);
+bot.hears(TELEGRAM_BOT_COMMAND.GET_LAST_MAIL, (ctx) => {
+  customGmail.getLastMail(ctx);
 });
-bot.action(TELEGRAM_BOT_COMMAND.GET_LAST_GMAIL, (ctx) => {
-  customGmail.getLastGmail(ctx);
+bot.action(TELEGRAM_BOT_COMMAND.GET_LAST_MAIL, (ctx) => {
+  customGmail.getLastMail(ctx);
 });
 
 // * Summary
-bot.hears(TELEGRAM_BOT_COMMAND.GET_SUMMARY_GMAIL, (ctx) => {
-  customGmail.getSummary(ctx);
+bot.hears(TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY, (ctx) => {
+  customGmail.getTodaysAllMailSummary(ctx);
 });
-bot.action(TELEGRAM_BOT_COMMAND.GET_SUMMARY_GMAIL, (ctx) => {
-  customGmail.getSummary(ctx);
+bot.action(TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY, (ctx) => {
+  customGmail.getTodaysAllMailSummary(ctx);
 });
 
 // HEH

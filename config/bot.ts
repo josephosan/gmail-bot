@@ -1,6 +1,7 @@
 // ** ========================= Bot Commands ======================== ** //
 export enum TELEGRAM_BOT_COMMAND {
-  GET_ALL_GMAIL = "✌️ Get all",
-  GET_LAST_GMAIL = "👍 Get last",
-  GET_SUMMARY_GMAIL = "😩 Summary",
+  GET_ALL_ACTIVE_GMAIL = "✌️ All active gmail",
+
+  GET_LAST_MAIL = "👍 Last mail",
+  GET_ALL_MAIL_SUMMARY = "😩 Today all mail summary",
 }
