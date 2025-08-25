@@ -1,69 +1,48 @@
 import fs from "fs/promises";
 import path, { resolve } from "path";
 import process from "process";
-import { authenticate } from "@google-cloud/local-auth";
+import crypto from "node:crypto";
 import { google, Auth } from "googleapis";
-import { TelegramActionContext, TelegramHearsContext } from "../interface";
+import {
+  GoogleAuthData,
+  TelegramActionContext,
+  TelegramContext,
+  TelegramHearsContext,
+} from "../interface";
 import { logger } from "../log";
-import { AUTHORIZED_USERNAME } from "../config/env";
-import { error } from "console";
-
-const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
+import {
+  AUTHORIZED_USERNAME,
+  GOOGLE_AUTH_URL,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_GMAIL_SCOPE,
+  GOOGLE_REDIRECT_URL,
+} from "../config/env";
 
 const TOKEN_PATH = path.join(process.cwd(), "token.json");
-const CREDENTIALS_PATH = path.join(process.cwd(), "credentials.json");
 
-export class CustomGmail {
+class CustomGmail {
+  private authData: null | GoogleAuthData = null;
+  private authorizationState: null | string = null;
+
   constructor() {
-    this.initialize()
-      .then(() => {
-        logger.log("Gmail class instantiated.");
-      })
-      .catch((err) => {
-        logger.error(err);
-      });
+    this.loadSavedCredentialsIfExist();
   }
 
-  private initialize(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.authorize()
-        .then((auth: Auth.OAuth2Client) => {
-          this.listLabels(auth);
-          resolve();
-        })
-        .catch((err) => {
-          logger.log(err);
-          reject(err);
-        });
-    });
-  }
-
-  /**
-   * Reads previously authorized credentials from the save file.
-   */
-  private async loadSavedCredentialsIfExist(): Promise<Auth.OAuth2Client | null> {
+  public async loadSavedCredentialsIfExist(): Promise<GoogleAuthData | null> {
     try {
       const content = await fs.readFile(TOKEN_PATH, "utf8");
       const credentials = JSON.parse(content);
-      return google.auth.fromJSON(credentials) as Auth.OAuth2Client;
+      this.authData = credentials;
+      return credentials;
     } catch (err) {
       return null;
     }
   }
 
-  /**
-   * Serializes credentials to a file compatible with GoogleAuth.fromJSON.
-   */
-  private async saveCredentials(client: Auth.OAuth2Client): Promise<void> {
-    const content = await fs.readFile(CREDENTIALS_PATH, "utf8");
-    const keys = JSON.parse(content);
-    const key = keys.installed || keys.web;
-
+  public async saveCredentials(credentials: GoogleAuthData): Promise<void> {
     const payload = JSON.stringify({
-      type: "authorized_user",
-      client_id: key.client_id,
-      client_secret: key.client_secret,
-      refresh_token: client.credentials.refresh_token,
+      ...credentials,
     });
 
     await fs.writeFile(TOKEN_PATH, payload);
@@ -72,20 +51,28 @@ export class CustomGmail {
   /**
    * Load or request or authorization to call APIs.
    */
-  public async authorize(): Promise<Auth.OAuth2Client> {
-    let client = await this.loadSavedCredentialsIfExist();
-    if (client) {
-      return client;
+  public async authorize(ctx: TelegramContext): Promise<void> {
+    const username = ctx.from?.username;
+    if (!username) {
+      logger.error("No username provided for authentication");
+      throw new Error("No username provided for authentication");
     }
-    client = (await authenticate({
-      scopes: SCOPES,
-      keyfilePath: CREDENTIALS_PATH,
-    })) as Auth.OAuth2Client;
 
-    if (client.credentials) {
-      await this.saveCredentials(client);
-    }
-    return client;
+    // Generate unique state
+    const _tmp_name = `_telegram_username_${username}`;
+    this.authorizationState = Buffer.from(_tmp_name).toString("base64");
+
+    // Generate params
+    const params = new URLSearchParams();
+
+    params.append("scope", GOOGLE_GMAIL_SCOPE);
+    params.append("include_granted_scopes", "true");
+    params.append("response_type", "token");
+    params.append("state", this.authorizationState);
+    params.append("redirect_url", GOOGLE_REDIRECT_URL);
+    params.append("client_id", GOOGLE_CLIENT_ID);
+
+    ctx.reply(`${GOOGLE_AUTH_URL}?${params}`);
   }
 
   /**
@@ -112,7 +99,7 @@ export class CustomGmail {
   /**
    *
    */
-  private sanityCheck(ctx: TelegramHearsContext | TelegramActionContext): void {
+  private sanityCheck(ctx: TelegramContext): void {
     const telegramUser = ctx.from;
     const userName = telegramUser?.username;
 
@@ -123,35 +110,69 @@ export class CustomGmail {
     }
   }
 
+  /**
+   *
+   */
+  private generateOAuth(): Auth.OAuth2Client {
+    if (!this.authData) {
+      throw new Error("Please authorize!");
+    }
+    const oAuth2Client = new google.auth.OAuth2(
+      GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET,
+      GOOGLE_REDIRECT_URL,
+    );
+    oAuth2Client.setCredentials({
+      access_token: this.authData.access_token,
+      token_type: this.authData.token_type,
+    });
+
+    return oAuth2Client;
+  }
+
   // ** =========================== Actions =========================== ** //
   /**
    *
    */
-  public getActiveGmail(ctx: TelegramHearsContext | TelegramActionContext): void {
-    try {
-      this.sanityCheck(ctx);
-
-      logger.log(`Authorized user requesting for gmail.`);
-
-      this.authorize()
-        .then(async (auth) => {
-          const gmail = google.gmail({ version: "v1", auth });
-          const profile = await gmail.users.getProfile({ userId: "me" });
-          const emailAddress = profile.data.emailAddress;
-          logger.log(`Authenticated Gmail user: ${emailAddress}`);
-          ctx.reply(`Authenticated Gmail user: ${emailAddress}`);
-        })
-        .catch((err) => {
-          logger.error(`Failed to fetch Gmail username: ${err}`);
-          ctx.reply("Failed to fetch Gmail username.");
-        });
-    } catch (err) {}
+  public getAuthorizationState(): string | null {
+    return this.authorizationState;
   }
 
   /**
    *
    */
-  public getLastMail(ctx: TelegramHearsContext | TelegramActionContext): void {
+  public nullifyAuthorizationState(): void {
+    this.authorizationState = null;
+  }
+
+  /**
+   *
+   */
+  public async getActiveGmail(ctx: TelegramContext): Promise<void> {
+    try {
+      this.sanityCheck(ctx);
+
+      logger.log(`Authorized user requesting for gmail.`);
+
+      const oAuth2Client = this.generateOAuth();
+      const gmail = google.gmail({
+        version: "v1",
+        auth: oAuth2Client,
+      });
+      const profile = await gmail.users.getProfile({ userId: "me" });
+      const emailAddress = profile.data.emailAddress;
+      logger.log(`Authenticated Gmail user: ${emailAddress}`);
+      ctx.reply(`Authenticated Gmail user: ${emailAddress}`);
+    } catch (err) {
+      logger.error(`Failed to fetch Gmail username: ${err}`);
+      ctx.reply("Failed to fetch Gmail username.");
+    }
+  }
+
+  /**
+   *
+   */
+  public getLastMail(ctx: TelegramContext): void {
     try {
       this.sanityCheck(ctx);
       ctx.reply("Fetching the last mail...");
@@ -161,9 +182,7 @@ export class CustomGmail {
   /**
    *
    */
-  public getTodaysAllMailSummary(
-    ctx: TelegramHearsContext | TelegramActionContext,
-  ): void {
+  public getTodaysAllMailSummary(ctx: TelegramContext): void {
     try {
       this.sanityCheck(ctx);
       ctx.reply("Fetching Gmail summary...");

@@ -86,6 +86,11 @@ bot.action(TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY, (ctx) => {
   customGmail.getTodaysAllMailSummary(ctx);
 });
 
+export async function sendMessageToUsername(username: string, text: string) {
+  const user = await bot.telegram.getChat(`@${username}`);
+  return bot.telegram.sendMessage(user.id, text);
+}
+
 // HEH
 bot.on(message("sticker"), (ctx) => ctx.reply("👍"));
 

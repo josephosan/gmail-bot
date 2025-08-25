@@ -1,15 +1,40 @@
 import express, { Request, Response } from "express";
 import { logger } from "../log";
+import { customGmail } from "../mail";
+import { bot, sendMessageToUsername } from "../bot";
+import { AUTHORIZED_USERNAME } from "../config/env";
 
 export const app = express();
 
 app.get("/oauth2", async (req: Request, res: Response) => {
-  const code = req.query.code as string;
-
-  if (!code) {
-    return res.status(400).send("No code provided");
+  let params: Record<string, string> = {};
+  if (req.originalUrl.includes("#")) {
+    const hash = req.originalUrl.split("#")[1];
+    hash.split("&").forEach((pair) => {
+      const [key, value] = pair.split("=");
+      params[key] = decodeURIComponent(value || "");
+    });
+  } else {
+    params = req.query as Record<string, string>;
   }
 
-  logger.log(`Auth code: ${code}`);
+  const accessToken = params.access_token;
+  const tokenType = params.token_type;
+  const expiresIn = params.expires_in;
+  const error = params.error;
+
+  if (error) {
+    sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization Failed!");
+  }
+
+  if (accessToken) {
+    customGmail.saveCredentials({
+      access_token: accessToken,
+      token_type: tokenType,
+      expires_in: expiresIn,
+    });
+    sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization successful.");
+  }
+
   res.send(200);
 });

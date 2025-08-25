@@ -19,3 +19,19 @@ export type TelegramActionContext = Context<Update.CallbackQueryUpdate<CallbackQ
   Omit<Context<Update>, keyof Context<Update>> & {
     match: RegExpExecArray;
   };
+
+/**
+ *
+ */
+export type TelegramContext = TelegramHearsContext | TelegramActionContext;
+
+/**
+ *
+ */
+export interface GoogleAuthData {
+  access_token: string;
+  expires_in: string;
+  token_type: string;
+  scope?: string;
+  refresh_token?: string;
+}
