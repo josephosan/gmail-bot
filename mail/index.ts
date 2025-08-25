@@ -152,7 +152,10 @@ export class CustomGmail {
    *
    */
   public getLastMail(ctx: TelegramHearsContext | TelegramActionContext): void {
-    ctx.reply("Fetching the last mail...");
+    try {
+      this.sanityCheck(ctx);
+      ctx.reply("Fetching the last mail...");
+    } catch (err) {}
   }
 
   /**
@@ -161,7 +164,10 @@ export class CustomGmail {
   public getTodaysAllMailSummary(
     ctx: TelegramHearsContext | TelegramActionContext,
   ): void {
-    ctx.reply("Fetching Gmail summary...");
+    try {
+      this.sanityCheck(ctx);
+      ctx.reply("Fetching Gmail summary...");
+    } catch (err) {}
   }
 }
 
