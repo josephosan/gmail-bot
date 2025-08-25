@@ -165,7 +165,7 @@ class CustomGmail {
       ctx.reply(`Authenticated Gmail user: ${emailAddress}`);
     } catch (err) {
       logger.error(`Failed to fetch Gmail username: ${err}`);
-      ctx.reply("Failed to fetch Gmail username.");
+      ctx.reply(`Failed to fetch Gmail username. ${err}`);
     }
   }
 

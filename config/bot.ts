@@ -1,5 +1,7 @@
 // ** ========================= Bot Commands ======================== ** //
 export enum TELEGRAM_BOT_COMMAND {
+  AUTHORIZE = "Authorize",
+
   GET_ALL_ACTIVE_GMAIL = "✌️ All active gmail",
 
   GET_LAST_MAIL = "👍 Last mail",

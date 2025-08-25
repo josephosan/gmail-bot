@@ -62,6 +62,19 @@ bot.help((ctx) => {
   );
 });
 
+bot.command("authorize", async (ctx) => {
+  try {
+    // Replace with your actual authorization logic
+    await ctx.reply(
+      "Authorization process started. Please follow the instructions sent to your email.",
+    );
+    await customGmail.authorize(ctx);
+  } catch (error) {
+    logger.error(`Authorization error: ${error}`);
+    await ctx.reply("Failed to start authorization. Please try again later.");
+  }
+});
+
 // * Get all
 bot.hears(TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL, (ctx) => {
   customGmail.getActiveGmail(ctx);
