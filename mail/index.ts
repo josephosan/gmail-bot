@@ -69,7 +69,7 @@ class CustomGmail {
     params.append("include_granted_scopes", "true");
     params.append("response_type", "token");
     params.append("state", this.authorizationState);
-    params.append("redirect_url", GOOGLE_REDIRECT_URL);
+    params.append("redirect_uri", GOOGLE_REDIRECT_URL);
     params.append("client_id", GOOGLE_CLIENT_ID);
 
     ctx.reply(`${GOOGLE_AUTH_URL}?${params}`);
