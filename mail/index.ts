@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 import { google, Auth } from "googleapis";
 import {
   GoogleAuthData,
+  GoogleCredentials,
   TelegramActionContext,
   TelegramContext,
   TelegramHearsContext,
@@ -25,7 +26,15 @@ class CustomGmail {
   private authData: null | GoogleAuthData = null;
   private authorizationState: null | string = null;
 
+  private oauth2Client: Auth.OAuth2Client;
+
   constructor() {
+    this.oauth2Client = new google.auth.OAuth2(
+      GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET,
+      GOOGLE_REDIRECT_URL,
+    );
+
     this.loadSavedCredentialsIfExist();
   }
 
@@ -110,27 +119,21 @@ class CustomGmail {
     }
   }
 
+  // ** =========================== Actions =========================== ** //
   /**
    *
    */
-  private generateOAuth(): Auth.OAuth2Client {
-    if (!this.authData) {
-      throw new Error("Please authorize!");
-    }
-    const oAuth2Client = new google.auth.OAuth2(
-      GOOGLE_CLIENT_ID,
-      GOOGLE_CLIENT_SECRET,
-      GOOGLE_REDIRECT_URL,
-    );
-    oAuth2Client.setCredentials({
-      access_token: this.authData.access_token,
-      token_type: this.authData.token_type,
-    });
-
-    return oAuth2Client;
+  public getOauth2Client(): Auth.OAuth2Client {
+    return this.oauth2Client;
   }
 
-  // ** =========================== Actions =========================== ** //
+  /**
+   *
+   */
+  public setCredentials(tokens: GoogleCredentials): void {
+    this.oauth2Client.setCredentials(tokens);
+  }
+
   /**
    *
    */
@@ -154,10 +157,9 @@ class CustomGmail {
 
       logger.log(`Authorized user requesting for gmail.`);
 
-      const oAuth2Client = this.generateOAuth();
       const gmail = google.gmail({
         version: "v1",
-        auth: oAuth2Client,
+        auth: this.oauth2Client,
       });
       const profile = await gmail.users.getProfile({ userId: "me" });
       const emailAddress = profile.data.emailAddress;

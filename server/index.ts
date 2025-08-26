@@ -1,29 +1,15 @@
 import express, { Request, Response } from "express";
 import { logger } from "../log";
 import { customGmail } from "../mail";
-import { bot, sendMessageToUsername } from "../bot";
+import { sendMessageToUsername } from "../bot";
 import { AUTHORIZED_USERNAME } from "../config/env";
 
 export const app = express();
 
-app.get("/oauth2", async (req: Request, res: Response) => {
+app.get("/oauth2callback", async (req: Request, res: Response) => {
   logger.log(`Api called with url: ${req.originalUrl}`);
-  let params: Record<string, string> = {};
-  if (req.originalUrl.includes("#")) {
-    const hash = req.originalUrl.split("#")[1];
-    hash.split("&").forEach((pair) => {
-      const [key, value] = pair.split("=");
-      params[key] = decodeURIComponent(value || "");
-    });
-  } else {
-    params = req.query as Record<string, string>;
-  }
-
-  const accessToken = params.access_token;
-  const tokenType = params.token_type;
-  const expiresIn = params.expires_in;
-  const error = params.error;
-  const state = params.state;
+  const code = req.query.code as string;
+  const state = req.query.state as string;
 
   const generatedState = customGmail.getAuthorizationState();
   if (!state || state !== generatedState) {
@@ -31,25 +17,17 @@ app.get("/oauth2", async (req: Request, res: Response) => {
     logger.error(
       `Authorization failed, States don't match, state: ${state}, generatedState: ${generatedState}`,
     );
-    return res.send(403);
+    return res.sendStatus(403);
   }
 
-  if (error) {
-    logger.error("Something went wrong on google side, authorization failed!");
-    sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization Failed!");
-    return res.send(403);
+  if (!code) {
+    logger.error("No authorization code returned");
+    return res.sendStatus(400);
   }
 
-  if (accessToken) {
-    customGmail.saveCredentials({
-      access_token: accessToken,
-      token_type: tokenType,
-      expires_in: expiresIn,
-    });
-    logger.log("Authorization successful");
-    sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization successful.");
-    return res.send(403);
-  }
-
-  res.send(200);
+  const { tokens } = await customGmail.getOauth2Client().getToken(code);
+  customGmail.setCredentials(tokens);
+  logger.log("Authorization successful");
+  sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization successful.");
+  return res.sendStatus(200);
 });
