@@ -7,6 +7,7 @@ import { AUTHORIZED_USERNAME } from "../config/env";
 export const app = express();
 
 app.get("/oauth2", async (req: Request, res: Response) => {
+  logger.log(`Api called with url: ${req.originalUrl}`);
   let params: Record<string, string> = {};
   if (req.originalUrl.includes("#")) {
     const hash = req.originalUrl.split("#")[1];
