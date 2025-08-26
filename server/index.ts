@@ -25,7 +25,7 @@ app.get("/oauth2", async (req: Request, res: Response) => {
   const state = params.state;
 
   const generatedState = customGmail.getAuthorizationState();
-  if (!params.state || params.state !== generatedState) {
+  if (!state || state !== generatedState) {
     sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization Failed!");
     logger.error(
       `Authorization failed, States don't match, state: ${params.state}, generatedState: ${generatedState}`,
@@ -36,6 +36,7 @@ app.get("/oauth2", async (req: Request, res: Response) => {
   if (error) {
     logger.error("Something went wrong on google side, authorization failed!");
     sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization Failed!");
+    return res.send(403);
   }
 
   if (accessToken) {
@@ -46,6 +47,7 @@ app.get("/oauth2", async (req: Request, res: Response) => {
     });
     logger.log("Authorization successful");
     sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization successful.");
+    return res.send(403);
   }
 
   res.send(200);
