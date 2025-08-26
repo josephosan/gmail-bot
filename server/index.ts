@@ -28,9 +28,9 @@ app.get("/oauth2", async (req: Request, res: Response) => {
   if (!state || state !== generatedState) {
     sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization Failed!");
     logger.error(
-      `Authorization failed, States don't match, state: ${params.state}, generatedState: ${generatedState}`,
+      `Authorization failed, States don't match, state: ${params}, generatedState: ${generatedState}`,
     );
-    return res.send(200);
+    return res.send(403);
   }
 
   if (error) {
