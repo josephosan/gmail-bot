@@ -76,7 +76,7 @@ class CustomGmail {
 
     params.append("scope", GOOGLE_GMAIL_SCOPE);
     params.append("include_granted_scopes", "true");
-    params.append("response_type", "token");
+    params.append("response_type", "code");
     params.append("state", this.authorizationState);
     params.append("redirect_uri", GOOGLE_REDIRECT_URL);
     params.append("client_id", GOOGLE_CLIENT_ID);
