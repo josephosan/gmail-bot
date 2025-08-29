@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import { logger } from "../log";
 import { customGmail } from "../mail";
 import { sendMessageToUsername } from "../bot";
-import { AUTHORIZED_USERNAME } from "../config/env";
+import { AUTHORIZED_USERNAME, FINAL_REDIRECT_URL } from "../config/env";
 
 export const app = express();
 
@@ -28,7 +28,7 @@ app.get("/oauth2callback", async (req: Request, res: Response) => {
     const { tokens } = await customGmail.getOauth2Client().getToken(code);
     customGmail.setCredentials(tokens);
     logger.log("Authorization successful");
-    return res.redirect("https://t.me/personal_gmail_tracker_bot");
+    return res.redirect(FINAL_REDIRECT_URL);
   } catch (err) {
     logger.error(`Error: ${err}`);
     res.sendStatus(500);

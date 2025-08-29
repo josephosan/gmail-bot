@@ -7,6 +7,8 @@ dotenv.config();
 // ** =============================================================== ** //
 export const TELEGRAM_BOT_TOKEN = process.env.BOT_API_TOKEN || "";
 export const AUTHORIZED_USERNAME = process.env.AUTHORIZED_USERNAME ?? "josephosan";
+export const BOT_ID = process.env.BOT_ID ?? "";
+export const FINAL_REDIRECT_URL = `https://t.me/${BOT_ID}`;
 
 // ** =============================================================== ** //
 // **                          Express Server                         ** //

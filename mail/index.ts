@@ -318,7 +318,7 @@ class CustomGmail {
       const chunks = splitMessage(summary);
 
       for (const chunk of chunks) {
-        await ctx.reply(chunk, { parse_mode: "Markdown" });
+        await ctx.reply(chunk, { parse_mode: undefined });
       }
     } catch (err) {
       console.error(`Failed to fetch today's emails: ${err}`);
