@@ -100,7 +100,7 @@ bot.action(TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY, (ctx) => {
 });
 
 export async function sendMessageToUsername(username: string, text: string) {
-  const user = await bot.telegram.getChat(`@${username}`);
+  const user = await bot.telegram.getChat(`${username}`);
   return bot.telegram.sendMessage(user.id, text);
 }
 

@@ -13,7 +13,6 @@ app.get("/oauth2callback", async (req: Request, res: Response) => {
 
   const generatedState = customGmail.getAuthorizationState();
   if (!state || state !== generatedState) {
-    sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization Failed!");
     logger.error(
       `Authorization failed, States don't match, state: ${state}, generatedState: ${generatedState}`,
     );
@@ -25,9 +24,13 @@ app.get("/oauth2callback", async (req: Request, res: Response) => {
     return res.sendStatus(400);
   }
 
-  const { tokens } = await customGmail.getOauth2Client().getToken(code);
-  customGmail.setCredentials(tokens);
-  logger.log("Authorization successful");
-  sendMessageToUsername(AUTHORIZED_USERNAME, "Authorization successful.");
-  return res.sendStatus(200);
+  try {
+    const { tokens } = await customGmail.getOauth2Client().getToken(code);
+    logger.log(`Access token: ${tokens?.access_token}`);
+    customGmail.setCredentials(tokens);
+    logger.log("Authorization successful");
+    return res.sendStatus(200);
+  } catch (err) {
+    logger.error(`Error: ${err}`);
+  }
 });
