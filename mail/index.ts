@@ -172,13 +172,68 @@ class CustomGmail {
   }
 
   /**
-   *
+   * Fetch the last Gmail for the authenticated user
    */
-  public getLastMail(ctx: TelegramContext): void {
+  public async getLastMail(ctx: TelegramContext): Promise<void> {
     try {
       this.sanityCheck(ctx);
-      ctx.reply("Fetching the last mail...");
-    } catch (err) {}
+
+      const gmail = google.gmail({
+        version: "v1",
+        auth: this.oauth2Client,
+      });
+
+      // 1️⃣ List messages, max 1
+      const { data } = await gmail.users.messages.list({
+        userId: "me",
+        maxResults: 1,
+        labelIds: ["INBOX"],
+      });
+
+      const messages = data.messages;
+      if (!messages || messages.length === 0) {
+        ctx.reply("No emails found in your inbox.");
+        return;
+      }
+
+      const lastMessageId = messages[0].id;
+
+      // 2️⃣ Get the full message
+      const msg = await gmail.users.messages.get({
+        userId: "me",
+        id: lastMessageId!,
+        format: "full",
+      });
+
+      const payload = msg.data.payload!;
+      const headers = payload.headers || [];
+
+      // 3️⃣ Extract useful info: From, Subject, Date
+      const from = headers.find((h) => h.name === "From")?.value || "Unknown sender";
+      const subject = headers.find((h) => h.name === "Subject")?.value || "(No subject)";
+      const date = headers.find((h) => h.name === "Date")?.value || "";
+
+      // 4️⃣ Extract body (plain text)
+      let body = "";
+      if (payload.parts && payload.parts.length) {
+        const part = payload.parts.find((p) => p.mimeType === "text/plain");
+        if (part && part.body && part.body.data) {
+          body = Buffer.from(part.body.data, "base64").toString("utf-8");
+        }
+      } else if (payload.body?.data) {
+        body = Buffer.from(payload.body.data, "base64").toString("utf-8");
+      }
+
+      ctx.reply(
+        `📧 Last email:\nFrom: ${from}\nSubject: ${subject}\nDate: ${date}\n\n${body.slice(
+          0,
+          500,
+        )}...`,
+      );
+    } catch (err) {
+      logger.error(`Failed to fetch last Gmail: ${err}`);
+      ctx.reply(`Failed to fetch last Gmail. ${err}`);
+    }
   }
 
   /**
