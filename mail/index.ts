@@ -1,7 +1,6 @@
 import fs from "fs/promises";
-import path, { resolve } from "path";
+import path from "path";
 import process from "process";
-import crypto from "node:crypto";
 import { google, Auth } from "googleapis";
 import {
   GoogleAuthData,
@@ -19,6 +18,7 @@ import {
   GOOGLE_GMAIL_SCOPE,
   GOOGLE_REDIRECT_URL,
 } from "../config/env";
+import { promptAi } from "../gemini";
 
 const TOKEN_PATH = path.join(process.cwd(), "token.json");
 
@@ -296,12 +296,43 @@ class CustomGmail {
       const feedText = feed.join("\n");
       ctx.reply(`📬 Feed of today's emails generated. Total emails: ${messages.length}`);
 
-      console.log(feedText);
+      const basePrompt = `
+        You are my email assistant. Below I will provide you with a feed of all my emails for today, including the sender, subject, date, and body text.
+
+        Your task:
+        1. Summarize the main topics and information from these emails in a clear, concise way.
+        2. Group related emails together if they are about the same topic.
+        3. Highlight any important actions, deadlines, or requests.
+        4. Keep the summary easy to scan, using bullet points if possible.
+        5. Ignore irrelevant details like signatures, disclaimers, or repeated automated text.
+
+        Here are today’s emails:
+        ${feedText}
+      `;
+      const summary = await promptAi(basePrompt);
+      if (!summary) {
+        logger.error(`Gemeni returned an empty response`);
+        ctx.reply(`Gemeni error, Empty response.`);
+        return;
+      }
+      const chunks = splitMessage(summary);
+
+      for (const chunk of chunks) {
+        await ctx.reply(chunk, { parse_mode: "Markdown" });
+      }
     } catch (err) {
       console.error(`Failed to fetch today's emails: ${err}`);
       ctx.reply(`Failed to fetch today's emails. ${err}`);
     }
   }
+}
+
+function splitMessage(text: string, chunkSize = 4000): string[] {
+  const chunks: string[] = [];
+  for (let i = 0; i < text.length; i += chunkSize) {
+    chunks.push(text.substring(i, i + chunkSize));
+  }
+  return chunks;
 }
 
 export const customGmail = new CustomGmail();

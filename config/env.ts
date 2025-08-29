@@ -23,3 +23,5 @@ export const GOOGLE_TOKEN_URL = process.env.GOOGLE_TOKEN_URL || "";
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 export const GOOGLE_REDIRECT_URL = process.env.GOOGLE_REDIRECT_URL || "";
 export const GOOGLE_GMAIL_SCOPE = process.env.GOOGLE_GMAIL_SCOPE || "";
+
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
