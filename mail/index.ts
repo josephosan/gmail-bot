@@ -183,7 +183,6 @@ class CustomGmail {
         auth: this.oauth2Client,
       });
 
-      // 1️⃣ List messages, max 1
       const { data } = await gmail.users.messages.list({
         userId: "me",
         maxResults: 1,
@@ -198,7 +197,6 @@ class CustomGmail {
 
       const lastMessageId = messages[0].id;
 
-      // 2️⃣ Get the full message
       const msg = await gmail.users.messages.get({
         userId: "me",
         id: lastMessageId!,
@@ -208,12 +206,10 @@ class CustomGmail {
       const payload = msg.data.payload!;
       const headers = payload.headers || [];
 
-      // 3️⃣ Extract useful info: From, Subject, Date
       const from = headers.find((h) => h.name === "From")?.value || "Unknown sender";
       const subject = headers.find((h) => h.name === "Subject")?.value || "(No subject)";
       const date = headers.find((h) => h.name === "Date")?.value || "";
 
-      // 4️⃣ Extract body (plain text)
       let body = "";
       if (payload.parts && payload.parts.length) {
         const part = payload.parts.find((p) => p.mimeType === "text/plain");
@@ -236,14 +232,75 @@ class CustomGmail {
     }
   }
 
-  /**
-   *
-   */
-  public getTodaysAllMailSummary(ctx: TelegramContext): void {
+  public async getTodaysAllMailSummary(ctx: TelegramContext): Promise<void> {
     try {
       this.sanityCheck(ctx);
-      ctx.reply("Fetching Gmail summary...");
-    } catch (err) {}
+
+      const gmail = google.gmail({
+        version: "v1",
+        auth: this.oauth2Client,
+      });
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const after = today.toISOString();
+
+      const query = `after:${Math.floor(today.getTime() / 1000)}`;
+
+      const res = await gmail.users.messages.list({
+        userId: "me",
+        q: query,
+        maxResults: 50,
+      });
+
+      const messages = res.data.messages || [];
+
+      if (!messages.length) {
+        ctx.reply("No emails found today.");
+        return;
+      }
+
+      const feed: string[] = [];
+
+      for (const msg of messages) {
+        const fullMsg = await gmail.users.messages.get({
+          userId: "me",
+          id: msg.id!,
+          format: "full",
+        });
+
+        const payload = fullMsg.data.payload!;
+        const headers = payload.headers || [];
+
+        const from = headers.find((h) => h.name === "From")?.value || "Unknown sender";
+        const subject =
+          headers.find((h) => h.name === "Subject")?.value || "(No subject)";
+        const date = headers.find((h) => h.name === "Date")?.value || "";
+
+        // Extract snippet/body
+        let body = fullMsg.data.snippet || "";
+        if (!body && payload.parts?.length) {
+          const part = payload.parts.find((p) => p.mimeType === "text/plain");
+          if (part?.body?.data) {
+            body = Buffer.from(part.body.data, "base64").toString("utf-8");
+          }
+        } else if (payload.body?.data) {
+          body = Buffer.from(payload.body.data, "base64").toString("utf-8");
+        }
+
+        feed.push(
+          `From: ${from}\nSubject: ${subject}\nDate: ${date}\nBody: ${body}\n\n---\n`,
+        );
+      }
+
+      const feedText = feed.join("\n");
+      ctx.reply(`📬 Feed of today's emails generated. Total emails: ${messages.length}`);
+
+      console.log(feedText);
+    } catch (err) {
+      console.error(`Failed to fetch today's emails: ${err}`);
+      ctx.reply(`Failed to fetch today's emails. ${err}`);
+    }
   }
 }
 

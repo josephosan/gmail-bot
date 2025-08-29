@@ -1,6 +1,6 @@
 import { Telegraf, Markup } from "telegraf";
 import { message } from "telegraf/filters";
-import { TELEGRAM_BOT_TOKEN } from "../config/env";
+import { AUTHORIZED_USERNAME, TELEGRAM_BOT_TOKEN } from "../config/env";
 import { TELEGRAM_BOT_COMMAND } from "../config/bot";
 import { customGmail } from "../mail";
 import { logger } from "../log";
@@ -64,6 +64,12 @@ bot.help((ctx) => {
 
 bot.command("authorize", async (ctx) => {
   try {
+    const username = ctx.from.username ?? null;
+
+    if (!username || username !== AUTHORIZED_USERNAME) {
+      await ctx.reply(`Cannot authenticate user: ${username}`);
+      return;
+    }
     // Replace with your actual authorization logic
     await ctx.reply(
       "Authorization process started. Please follow the instructions sent to your email.",

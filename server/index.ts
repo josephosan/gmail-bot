@@ -26,11 +26,11 @@ app.get("/oauth2callback", async (req: Request, res: Response) => {
 
   try {
     const { tokens } = await customGmail.getOauth2Client().getToken(code);
-    logger.log(`Access token: ${tokens?.access_token}`);
     customGmail.setCredentials(tokens);
     logger.log("Authorization successful");
-    return res.sendStatus(200);
+    return res.redirect("https://t.me/personal_gmail_tracker_bot");
   } catch (err) {
     logger.error(`Error: ${err}`);
+    res.sendStatus(500);
   }
 });
