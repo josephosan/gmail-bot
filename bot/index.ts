@@ -14,6 +14,12 @@ bot.start((ctx) => {
     Markup.keyboard([
       [
         Markup.button.callback(
+          TELEGRAM_BOT_COMMAND.AUTHORIZE,
+          TELEGRAM_BOT_COMMAND.AUTHORIZE,
+        ),
+      ],
+      [
+        Markup.button.callback(
           TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL,
           TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL,
         ),
@@ -42,6 +48,12 @@ bot.help((ctx) => {
     Markup.inlineKeyboard([
       [
         Markup.button.callback(
+          TELEGRAM_BOT_COMMAND.AUTHORIZE,
+          TELEGRAM_BOT_COMMAND.AUTHORIZE,
+        ),
+      ],
+      [
+        Markup.button.callback(
           TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL,
           TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL,
         ),
@@ -62,7 +74,8 @@ bot.help((ctx) => {
   );
 });
 
-bot.command("authorize", async (ctx) => {
+// Authorize
+bot.hears(TELEGRAM_BOT_COMMAND.AUTHORIZE, async (ctx) => {
   try {
     const username = ctx.from.username ?? null;
 
@@ -70,10 +83,7 @@ bot.command("authorize", async (ctx) => {
       await ctx.reply(`Cannot authenticate user: ${username}`);
       return;
     }
-    // Replace with your actual authorization logic
-    await ctx.reply(
-      "Authorization process started. Please follow the instructions sent to your email.",
-    );
+
     await customGmail.authorize(ctx);
   } catch (error) {
     logger.error(`Authorization error: ${error}`);
@@ -85,23 +95,14 @@ bot.command("authorize", async (ctx) => {
 bot.hears(TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL, (ctx) => {
   customGmail.getActiveGmail(ctx);
 });
-bot.action(TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL, (ctx) => {
-  customGmail.getActiveGmail(ctx);
-});
 
 // * Get last
 bot.hears(TELEGRAM_BOT_COMMAND.GET_LAST_MAIL, (ctx) => {
   customGmail.getLastMail(ctx);
 });
-bot.action(TELEGRAM_BOT_COMMAND.GET_LAST_MAIL, (ctx) => {
-  customGmail.getLastMail(ctx);
-});
 
 // * Summary
 bot.hears(TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY, (ctx) => {
-  customGmail.getTodaysAllMailSummary(ctx);
-});
-bot.action(TELEGRAM_BOT_COMMAND.GET_ALL_MAIL_SUMMARY, (ctx) => {
   customGmail.getTodaysAllMailSummary(ctx);
 });
 

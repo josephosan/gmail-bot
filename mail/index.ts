@@ -28,6 +28,8 @@ class CustomGmail {
   private oauth2Client: Auth.OAuth2Client;
   private authCredentials: GoogleCredentials | null = null;
 
+  private lastEmailId: string | undefined | null = null;
+
   constructor() {
     this.oauth2Client = new google.auth.OAuth2(
       GOOGLE_CLIENT_ID,
@@ -74,6 +76,10 @@ class CustomGmail {
       ctx.reply(`Already authorized.`);
       return;
     }
+
+    await ctx.reply(
+      "Authorization process started. Please follow the instructions sent to your email.",
+    );
 
     // Generate unique state
     const _tmp_name = `_telegram_username_${Date.now()}${username}`;
@@ -226,11 +232,11 @@ class CustomGmail {
         return;
       }
 
-      const lastMessageId = messages[0].id;
+      const thisEmailId = messages[0].id;
 
       const msg = await gmail.users.messages.get({
         userId: "me",
-        id: lastMessageId!,
+        id: thisEmailId!,
         format: "full",
       });
 
@@ -263,6 +269,9 @@ class CustomGmail {
     }
   }
 
+  /**
+   *
+   */
   public async getTodaysAllMailSummary(ctx: TelegramContext): Promise<void> {
     try {
       this.sanityCheck(ctx);

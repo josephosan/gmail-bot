@@ -1,6 +1,7 @@
 import { bot } from "./bot";
 import { EXPRESS_SERVER_PORT } from "./config/env";
 import { logger } from "./log";
+import { customGmail } from "./mail";
 import { app } from "./server";
 
 // * Start express server
