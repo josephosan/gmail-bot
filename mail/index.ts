@@ -50,6 +50,7 @@ class CustomGmail {
   }
 
   public async saveCredentials(credentials: GoogleCredentials): Promise<void> {
+    this.authCredentials = credentials;
     const payload = JSON.stringify({
       ...credentials,
     });
@@ -166,7 +167,7 @@ class CustomGmail {
    *
    */
   public setCredentials(tokens: GoogleCredentials): void {
-    this.authCredentials = tokens;
+    this.saveCredentials(tokens);
     this.oauth2Client.setCredentials(tokens);
   }
 
