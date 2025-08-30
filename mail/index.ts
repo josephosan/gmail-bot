@@ -61,6 +61,14 @@ class CustomGmail {
   }
 
   /**
+   *
+   */
+  private clearCredentials(): void {
+    logger.log("Cleared up tokens.");
+    this.saveCredentials({});
+  }
+
+  /**
    * Load or request or authorization to call APIs.
    */
   public async authorize(ctx: TelegramContext): Promise<void> {
@@ -157,6 +165,7 @@ class CustomGmail {
       logger.log(`Response for me api: ${profile?.data?.emailAddress || ""}`);
       return gmail;
     } catch (err) {
+      this.clearCredentials();
       throw err;
     }
   }
