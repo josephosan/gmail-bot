@@ -44,7 +44,7 @@ class CustomGmail {
     try {
       const content = await fs.readFile(TOKEN_PATH, "utf8");
       const credentials = JSON.parse(content);
-      this.authCredentials = credentials;
+      this.setCredentials(credentials);
       return credentials;
     } catch (err) {
       return null;
