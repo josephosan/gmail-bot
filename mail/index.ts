@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import process from "process";
-import { google, Auth } from "googleapis";
+import { google, Auth, gmail_v1 } from "googleapis";
 import {
   GoogleAuthData,
   GoogleCredentials,
@@ -23,10 +23,10 @@ import { promptAi } from "../gemini";
 const TOKEN_PATH = path.join(process.cwd(), "token.json");
 
 class CustomGmail {
-  private authData: null | GoogleAuthData = null;
   private authorizationState: null | string = null;
 
   private oauth2Client: Auth.OAuth2Client;
+  private authCredentials: GoogleCredentials | null = null;
 
   constructor() {
     this.oauth2Client = new google.auth.OAuth2(
@@ -38,18 +38,18 @@ class CustomGmail {
     this.loadSavedCredentialsIfExist();
   }
 
-  public async loadSavedCredentialsIfExist(): Promise<GoogleAuthData | null> {
+  public async loadSavedCredentialsIfExist(): Promise<GoogleCredentials | null> {
     try {
       const content = await fs.readFile(TOKEN_PATH, "utf8");
       const credentials = JSON.parse(content);
-      this.authData = credentials;
+      this.authCredentials = credentials;
       return credentials;
     } catch (err) {
       return null;
     }
   }
 
-  public async saveCredentials(credentials: GoogleAuthData): Promise<void> {
+  public async saveCredentials(credentials: GoogleCredentials): Promise<void> {
     const payload = JSON.stringify({
       ...credentials,
     });
@@ -67,8 +67,15 @@ class CustomGmail {
       throw new Error("No username provided for authentication");
     }
 
+    // * Check if already authorized
+    if (this.authCredentials?.access_token) {
+      logger.log(`Authorized user requested for authorization, passed.`);
+      ctx.reply(`Already authorized.`);
+      return;
+    }
+
     // Generate unique state
-    const _tmp_name = `_telegram_username_${username}`;
+    const _tmp_name = `_telegram_username_${Date.now()}${username}`;
     this.authorizationState = Buffer.from(_tmp_name).toString("base64");
 
     // Generate params
@@ -119,6 +126,34 @@ class CustomGmail {
     }
   }
 
+  /**
+   *
+   */
+  private splitMessage(text: string, chunkSize = 4000): string[] {
+    const chunks: string[] = [];
+    for (let i = 0; i < text.length; i += chunkSize) {
+      chunks.push(text.substring(i, i + chunkSize));
+    }
+    return chunks;
+  }
+
+  /**
+   *
+   */
+  private async getGmailAndHandleRotate(): Promise<gmail_v1.Gmail> {
+    try {
+      const gmail = google.gmail({
+        version: "v1",
+        auth: this.oauth2Client,
+      });
+      const profile = await gmail.users.getProfile({ userId: "me" });
+      logger.log(`Response for me api: ${profile?.data?.emailAddress || ""}`);
+      return gmail;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   // ** =========================== Actions =========================== ** //
   /**
    *
@@ -131,6 +166,7 @@ class CustomGmail {
    *
    */
   public setCredentials(tokens: GoogleCredentials): void {
+    this.authCredentials = tokens;
     this.oauth2Client.setCredentials(tokens);
   }
 
@@ -157,10 +193,7 @@ class CustomGmail {
 
       logger.log(`Authorized user requesting for gmail.`);
 
-      const gmail = google.gmail({
-        version: "v1",
-        auth: this.oauth2Client,
-      });
+      const gmail = await this.getGmailAndHandleRotate();
       const profile = await gmail.users.getProfile({ userId: "me" });
       const emailAddress = profile.data.emailAddress;
       logger.log(`Authenticated Gmail user: ${emailAddress}`);
@@ -178,10 +211,7 @@ class CustomGmail {
     try {
       this.sanityCheck(ctx);
 
-      const gmail = google.gmail({
-        version: "v1",
-        auth: this.oauth2Client,
-      });
+      const gmail = await this.getGmailAndHandleRotate();
 
       const { data } = await gmail.users.messages.list({
         userId: "me",
@@ -236,14 +266,10 @@ class CustomGmail {
     try {
       this.sanityCheck(ctx);
 
-      const gmail = google.gmail({
-        version: "v1",
-        auth: this.oauth2Client,
-      });
+      const gmail = await this.getGmailAndHandleRotate();
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const after = today.toISOString();
 
       const query = `after:${Math.floor(today.getTime() / 1000)}`;
 
@@ -315,7 +341,7 @@ class CustomGmail {
         ctx.reply(`Gemeni error, Empty response.`);
         return;
       }
-      const chunks = splitMessage(summary);
+      const chunks = this.splitMessage(summary);
 
       for (const chunk of chunks) {
         await ctx.reply(chunk, { parse_mode: undefined });
@@ -325,14 +351,6 @@ class CustomGmail {
       ctx.reply(`Failed to fetch today's emails. ${err}`);
     }
   }
-}
-
-function splitMessage(text: string, chunkSize = 4000): string[] {
-  const chunks: string[] = [];
-  for (let i = 0; i < text.length; i += chunkSize) {
-    chunks.push(text.substring(i, i + chunkSize));
-  }
-  return chunks;
 }
 
 export const customGmail = new CustomGmail();
