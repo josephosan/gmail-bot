@@ -102,6 +102,8 @@ class CustomGmail {
     params.append("state", this.authorizationState);
     params.append("redirect_uri", GOOGLE_REDIRECT_URL);
     params.append("client_id", GOOGLE_CLIENT_ID);
+    params.append("access_type", "offline");
+    params.append("prompt", "consent");
 
     ctx.reply(`${GOOGLE_AUTH_URL}?${params}`);
   }
@@ -223,21 +225,25 @@ class CustomGmail {
   /**
    * Fetch the last Gmail for the authenticated user
    */
-  public async getLastMail(ctx: TelegramContext): Promise<void> {
+  public async getLastUnreadMails(
+    ctx: TelegramContext,
+    calledByJob = false,
+  ): Promise<void> {
     try {
-      this.sanityCheck(ctx);
+      if (ctx) this.sanityCheck(ctx);
 
       const gmail = await this.getGmailAndHandleRotate();
 
+      // Fetch only unread emails
       const { data } = await gmail.users.messages.list({
         userId: "me",
         maxResults: 1,
-        labelIds: ["INBOX"],
+        labelIds: ["INBOX", "UNREAD"], // Only new/unread emails
       });
 
       const messages = data.messages;
       if (!messages || messages.length === 0) {
-        ctx.reply("No emails found in your inbox.");
+        if (!calledByJob) ctx.reply("📭 No new emails found.");
         return;
       }
 
@@ -267,14 +273,22 @@ class CustomGmail {
       }
 
       ctx.reply(
-        `📧 Last email:\nFrom: ${from}\nSubject: ${subject}\nDate: ${date}\n\n${body.slice(
+        `📧 New email:\nFrom: ${from}\nSubject: ${subject}\nDate: ${date}\n\n${body.slice(
           0,
           500,
         )}...`,
       );
+
+      await gmail.users.messages.modify({
+        userId: "me",
+        id: thisEmailId!,
+        requestBody: {
+          removeLabelIds: ["UNREAD"],
+        },
+      });
     } catch (err) {
-      logger.error(`Failed to fetch last Gmail: ${err}`);
-      ctx.reply(`Failed to fetch last Gmail. ${err}`);
+      logger.error(`Failed to fetch new Gmail: ${err}`);
+      ctx.reply(`Failed to fetch new Gmail. ${err}`);
     }
   }
 

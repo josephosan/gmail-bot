@@ -98,7 +98,7 @@ bot.hears(TELEGRAM_BOT_COMMAND.GET_ALL_ACTIVE_GMAIL, (ctx) => {
 
 // * Get last
 bot.hears(TELEGRAM_BOT_COMMAND.GET_LAST_MAIL, (ctx) => {
-  customGmail.getLastMail(ctx);
+  customGmail.getLastUnreadMails(ctx);
 });
 
 // * Summary
