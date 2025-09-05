@@ -288,7 +288,6 @@ class CustomGmail {
       });
     } catch (err) {
       logger.error(`Failed to fetch new Gmail: ${err}`);
-      ctx.reply(`Failed to fetch new Gmail. ${err}`);
     }
   }
 
