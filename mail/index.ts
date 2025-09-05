@@ -275,7 +275,7 @@ class CustomGmail {
       ctx.reply(
         `📧 New email:\nFrom: ${from}\nSubject: ${subject}\nDate: ${date}\n\n${body.slice(
           0,
-          500,
+          1000,
         )}...`,
       );
 
